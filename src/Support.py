@@ -16,6 +16,7 @@ if "collection" not in st.session_state:
 if "embeddings" not in st.session_state:
      st.session_state.embeddings = OpenAIEmbeddings()
 
+#this is used to get cosine similarity. 
 with st.sidebar:
     if st.button("Systemstatus prüfen"):
         health_status = get_systems_health(st.session_state.collection)
