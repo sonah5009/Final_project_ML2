@@ -17,7 +17,7 @@ load_dotenv()
 client = OpenAI()
 # MongoDB connection details
 
-# Email credentials
+# Email credentials - change receiver to your own mail.
 EMAIL_SENDER = 'chatbotreporting@gmail.com'
 EMAIL_PASSWORD = os.getenv("EMAIL")
 EMAIL_RECEIVER = 'martindecastro16@gmail.com'
