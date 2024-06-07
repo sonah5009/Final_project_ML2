@@ -27,7 +27,7 @@ with st.sidebar:
 with st.sidebar:
      st.write("Systemstatus wird nicht automatisch aktualisiert. Klicken Sie auf die Schaltfläche, um den aktuellen Systemstatus zu prüfen.")
 
-#initialize pdf and get vectore store. Update path to run. This is not efficent, everytime i run the application the method is going to run, even if the store already exists. I know, i need to improve this. 
+#initialize pdf and get vectore store. You will need to change the path from the file, so it matches yours.. This is not efficent, everytime i run the application the method is going to run, even if the store already exists. I know, i need to improve this. 
 #at the end of the day this is a prototype.     
 pdf = r"C:\Users\Admin\Desktop\ML2\Final_Project\src\Leistungen.pdf"
 if "vectore_store" not in st.session_state:

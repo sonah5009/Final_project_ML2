@@ -40,7 +40,7 @@ def get_chunks_from_pdf(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
-#create vector store from chunks
+#create vector store from chunks - you will need to change the path of the persist directory, so it matches yours.
 def get_vector_store(chunks):
     persist_directory = r"C:\Users\Admin\Desktop\ML2\Final_Project\src\db"
     embeddings = OpenAIEmbeddings()
