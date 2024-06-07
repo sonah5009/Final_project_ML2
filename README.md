@@ -65,7 +65,7 @@ project_root/
 ├── requirements.txt
 
 **Setup and Installation**
-1. Clone the Repository: git clone <repository_url>
+1. Clone the Repository: git clone https://github.com/mdcgl96/Final_project_ML2.git
 2. Set Up Virtual Environment: I run this on python version 3.10.11. If you use VS Code you will find how to create a virtual enviroment under this link https://code.visualstudio.com/docs/python/environments 
 3. Activate venv: I am a Windows user and activate my venv with ".venv\Scripts\activate" - if you use mac, check please how to do it. 
 4. Install Requirements: After activating the venv you can do pip install -r requirements.txt - if you don't have pip, you should get it. It's nice. https://pip.pypa.io/en/stable/installation/
