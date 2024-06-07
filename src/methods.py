@@ -15,6 +15,7 @@ import os
 import concurrent.futures
 import numpy as np
 
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -146,7 +147,8 @@ def update_document(document_id, validation_answer, collection, embeddings):
     )
     print(f"Document {document_id} updated with validation and embeddings successfully")
      # Trigger cosine similarity calculation
-    trigger_cosine_similarity_calculation(document_id, collection)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(trigger_cosine_similarity_calculation, document_id, collection)
     
 #once the experienced employee gives us an answer we calculate the cosine similarity
 def trigger_cosine_similarity_calculation(document_id, collection):
@@ -210,7 +212,7 @@ def get_systems_health(collection):
     
     average_cosine_similarity = calculate_average_cosine_similarity(collection)
     
-    if average_cosine_similarity < 0.9:
+    if average_cosine_similarity < 0.8:
         return "Momentan sind die Antworten unseres Systems nicht ganz mit den Antworten erfahrener Mitarbeiter abgestimmt. Wir kümmern uns um die Situation."
     else:
         return "Derzeit entspricht die Qualität unserer Antworten den Antworten erfahrener Mitarbeiter."

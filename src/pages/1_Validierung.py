@@ -35,7 +35,7 @@ if documents:
             if st.button(f"Füge Antwort hinzu", key=f"button_{str(doc['_id'])}"):
                 # Call the method to update the document with validation and embeddings
                 update_document(str(doc['_id']), validation_answer, collection, embeddings)
-                st.success(f"Bewertung erfolgreich hinzugefügt {str(doc['_id'])}!")
+                #st.success(f"Bewertung erfolgreich hinzugefügt {str(doc['_id'])}!") - I am not sure if i want to use this. Try it with and without and tell me what is faster :D. Wanted it for double safety. Thanks!
                 # Refresh the page to show the next document
                 st.experimental_rerun()
 else:
