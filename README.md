@@ -80,7 +80,7 @@ Setup for macOS Users shouldn't vary that much, but i am not sure, i am a window
 
 - Modify any Windows-style file paths to Unix-style paths in the code.
 - Check how to import os variables. 
-- If there is any libraries that are not available for macOS, what i don't think, just comment them out and try again. 
+- If there is any libraries that are not available for macOS, what i don't think, just comment them out and try again. God bless you.
 
 **Running the Project**
 
@@ -174,6 +174,8 @@ The only error i sometimes got, was from mongodb because the connection needed t
 5. What happened? Check methods orchestrate_response_and_upload, update_document, trigger_cosine_similarity_calculation and calculate_cosine_similarity.
 
 6. System's quality: So in this application we are using cosine similarity as a metric to decide if the answers the system is giving are good or not. The treshhold is set by 0.8. Change to the main page and click on the button "Systemstatus prüfen". 
+
+7. Reporting landscape: Questions from employees could point out what knowledge is lacking. This is a simple python script that could turn to a airflow DAG in the future. Stop the streamlit application and run python Reporting.py. Do not forget to change the receiver e-mail to yours. 
 
 The only error i sometimes got, was from mongodb because the connection needed too long. I just refreshed and it functioned. 
 
