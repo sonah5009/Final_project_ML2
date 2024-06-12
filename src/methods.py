@@ -1,4 +1,4 @@
-#on this page we will write the methods we will need for our prototype
+# on this page we will write the methods we will need for our prototype
 
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -10,7 +10,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime
-import pytz 
+import pytz
 import os
 import concurrent.futures
 import numpy as np
@@ -20,33 +20,44 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#Was wondering why my Document inside of my vectore store method was yellow. Chat-GPT saved the day.
-class Document: 
+# Was wondering why my Document inside of my vectore store method was yellow. Chat-GPT saved the day.
+
+
+class Document:
     def __init__(self, content, metadata=None):
         self.page_content = content
         self.metadata = metadata if metadata is not None else {}
 
-#get pdf text
+# get pdf text
+
+
 def process_pdf(pdf_path):
-    text=""
+    text = ""
     pdf_reader = PdfReader(pdf_path)
     for page in pdf_reader.pages:
         text += page.extract_text() if page.extract_text is not None else ""
     return text
 
-#get chunks from pdf
+# get chunks from pdf
+
+
 def get_chunks_from_pdf(text):
     text_splitter = RecursiveCharacterTextSplitter()
     chunks = text_splitter.split_text(text)
     return chunks
 
-#create vector store from chunks - you will need to change the path of the persist directory, so it matches yours.
+# create vector store from chunks - you will need to change the path of the persist directory, so it matches yours.
+
+
 def get_vector_store(chunks):
-    persist_directory = r"C:\Users\Admin\Desktop\ML2\Final_Project\src\db"
+    persist_directory = "/Users/sonah/Library/CloudStorage/OneDrive-ZHAW/ML2/Final_project_ML2/src/db"
+    # persist_directory = r"C:\Users\Admin\Desktop\ML2\Final_Project\src\db"
     embeddings = OpenAIEmbeddings()
     documents = [Document(chunk) for chunk in chunks]
-    vectore_store = Chroma.from_documents(documents, embeddings, persist_directory = persist_directory)
+    vectore_store = Chroma.from_documents(
+        documents, embeddings, persist_directory=persist_directory)
     return vectore_store
+
 
 def orchestration_pdf_vectore_store(pdf_path):
     text_pdf = process_pdf(pdf_path)
@@ -54,10 +65,11 @@ def orchestration_pdf_vectore_store(pdf_path):
     vectore_store = get_vector_store(text_chunks)
     return vectore_store
 
+
 def get_context_retriever_chain(vectore_store):
     llm = ChatOpenAI()
     retriever = vectore_store.as_retriever()
-    #this prompt will be filled with the variables we will pass in the chain
+    # this prompt will be filled with the variables we will pass in the chain
     prompt = ChatPromptTemplate.from_messages([
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}"),
@@ -66,17 +78,21 @@ def get_context_retriever_chain(vectore_store):
     retriever_chain = create_history_aware_retriever(llm, retriever, prompt)
     return retriever_chain
 
-#final retriever chain, this is taking our user query, our chat history and is going to return us an answer based on the entire conversation
+# final retriever chain, this is taking our user query, our chat history and is going to return us an answer based on the entire conversation
 # and context the previous chain has found.
-def get_conversational_rag_chain(retriever_chain): 
+
+
+def get_conversational_rag_chain(retriever_chain):
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "Antworten Sie auf die Fragen des Benutzers ausschliesslich basierend auf dem untenstehenden Kontext.:\n\n{context}"),
+        ("system",
+         "Antworten Sie auf die Fragen des Benutzers ausschliesslich basierend auf dem untenstehenden Kontext.:\n\n{context}"),
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}")
     ])
     stuff_documents_chain = create_stuff_documents_chain(llm, prompt)
     return create_retrieval_chain(retriever_chain, stuff_documents_chain)
+
 
 def get_response(chat_history, conversational_rag_chain, input):
     response = conversational_rag_chain.invoke({
@@ -85,17 +101,20 @@ def get_response(chat_history, conversational_rag_chain, input):
     })
     return response["answer"]
 
+
 def init_mongodb_connection():
     # Retrieve the connection string from the environment variable
     mongo_db_connection_string = os.getenv("MONGO_DB_CONNECTION_STRING")
 
     if not mongo_db_connection_string:
-        raise ValueError("MONGO_DB_CONNECTION_STRING is not set in the environment variables")
+        raise ValueError(
+            "MONGO_DB_CONNECTION_STRING is not set in the environment variables")
 
     client = MongoClient(mongo_db_connection_string)
     db = client["validationDB"]
     collection = db["answerValidation"]
     return collection
+
 
 def upload_to_mongodb(input, answer, embeddings, collection, time_zone='Europe/Zurich'):
     # Get the current time in the specified time zone
@@ -117,14 +136,17 @@ def upload_to_mongodb(input, answer, embeddings, collection, time_zone='Europe/Z
     collection.insert_one(document)
     print("Document inserted successfully")
 
+
 def orchestrate_response_and_upload(chat_history, conversational_rag_chain, input, collection, embeddings):
     # Step 1: Get the chatbot's response
-    chatbot_answer = get_response(chat_history, conversational_rag_chain, input)
-    
+    chatbot_answer = get_response(
+        chat_history, conversational_rag_chain, input)
+
     # Step 2: Upload the data to the database asynchronously
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(upload_to_mongodb, input, chatbot_answer, embeddings, collection)
-    
+        executor.submit(upload_to_mongodb, input,
+                        chatbot_answer, embeddings, collection)
+
     # Step 3: Return the chatbot's answer
     return chatbot_answer
 
@@ -132,8 +154,10 @@ def orchestrate_response_and_upload(chat_history, conversational_rag_chain, inpu
 def update_document(document_id, validation_answer, collection, embeddings):
 
     # Compute the embeddings for the validation answer
-    validation_embeddings_response = embeddings.embed_documents([validation_answer])
-    validation_embeddings = validation_embeddings_response[0]  # Extract the embedding vector
+    validation_embeddings_response = embeddings.embed_documents(
+        [validation_answer])
+    # Extract the embedding vector
+    validation_embeddings = validation_embeddings_response[0]
 
     # Update the document in MongoDB with the validation and embeddings
     collection.update_one(
@@ -145,25 +169,32 @@ def update_document(document_id, validation_answer, collection, embeddings):
             }
         }
     )
-    print(f"Document {document_id} updated with validation and embeddings successfully")
-     # Trigger cosine similarity calculation
+    print(
+        f"Document {document_id} updated with validation and embeddings successfully")
+    # Trigger cosine similarity calculation
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(trigger_cosine_similarity_calculation, document_id, collection)
-    
-#once the experienced employee gives us an answer we calculate the cosine similarity
+        executor.submit(trigger_cosine_similarity_calculation,
+                        document_id, collection)
+
+# once the experienced employee gives us an answer we calculate the cosine similarity
+
+
 def trigger_cosine_similarity_calculation(document_id, collection):
     document = collection.find_one({"_id": ObjectId(document_id)})
     if document and document.get("embeddingsBot") and document.get("embeddingsAnswer"):
         embeddingsBot = document["embeddingsBot"]
         embeddingsAnswer = document["embeddingsAnswer"]
-        cosine_similarity = calculate_cosine_similarity(embeddingsBot, embeddingsAnswer)
-        
+        cosine_similarity = calculate_cosine_similarity(
+            embeddingsBot, embeddingsAnswer)
+
         # Update the document with the cosine similarity
         collection.update_one(
             {"_id": ObjectId(document_id)},
             {"$set": {"cosineSimilarity": cosine_similarity}}
         )
-        print(f"Document {document_id} updated with cosine similarity {cosine_similarity}")
+        print(
+            f"Document {document_id} updated with cosine similarity {cosine_similarity}")
+
 
 def calculate_cosine_similarity(vec1, vec2):
     vec1 = np.array(vec1)
@@ -175,6 +206,7 @@ def calculate_cosine_similarity(vec1, vec2):
         return 0.0
     return dot_product / (norm_vec1 * norm_vec2)
 
+
 def calculate_average_cosine_similarity(collection):
     pipeline = [
         {"$match": {"cosineSimilarity": {"$ne": None}}},
@@ -184,34 +216,40 @@ def calculate_average_cosine_similarity(collection):
     average_cosine_similarity = list(result)[0]["averageCosineSimilarity"]
     return average_cosine_similarity
 
-#have old documents in the db that will not get updated by the other triggers.
+# have old documents in the db that will not get updated by the other triggers.
+
+
 def update_old_documents(collection):
     # Fetch documents where embeddingsAnswer is not None and cosineSimilarity is None
-    documents = collection.find({"embeddingsAnswer": {"$ne": None}, "cosineSimilarity": None})
+    documents = collection.find(
+        {"embeddingsAnswer": {"$ne": None}, "cosineSimilarity": None})
 
     for doc in documents:
         embeddingsBot = doc.get("embeddingsBot")
         embeddingsAnswer = doc.get("embeddingsAnswer")
-        
+
         if embeddingsBot and embeddingsAnswer:
             # Ensure the embeddings are numpy arrays
             embeddingsBot = np.array(embeddingsBot)
             embeddingsAnswer = np.array(embeddingsAnswer)
-            
+
             # Calculate cosine similarity
-            cosine_similarity = calculate_cosine_similarity(embeddingsBot, embeddingsAnswer)
-            
+            cosine_similarity = calculate_cosine_similarity(
+                embeddingsBot, embeddingsAnswer)
+
             # Update the document with the calculated cosine similarity
             collection.update_one(
                 {"_id": doc["_id"]},
                 {"$set": {"cosineSimilarity": cosine_similarity}}
             )
-            print(f"Document {doc['_id']} updated with cosine similarity {cosine_similarity}")
+            print(
+                f"Document {doc['_id']} updated with cosine similarity {cosine_similarity}")
+
 
 def get_systems_health(collection):
-    
+
     average_cosine_similarity = calculate_average_cosine_similarity(collection)
-    
+
     if average_cosine_similarity < 0.8:
         return "Momentan sind die Antworten unseres Systems nicht ganz mit den Antworten erfahrener Mitarbeiter abgestimmt. Wir kümmern uns um die Situation."
     else:
