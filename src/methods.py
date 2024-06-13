@@ -28,9 +28,8 @@ class Document:
         self.page_content = content
         self.metadata = metadata if metadata is not None else {}
 
+
 # get pdf text
-
-
 def process_pdf(pdf_path):
     text = ""
     pdf_reader = PdfReader(pdf_path)
@@ -50,23 +49,51 @@ def get_chunks_from_pdf(text):
 
 
 def get_vector_store(chunks):
+    # Set the directory where the vector store database will be saved
     persist_directory = "/Users/sonah/Library/CloudStorage/OneDrive-ZHAW/ML2/Final_project_ML2/src/db"
     # persist_directory = r"C:\Users\Admin\Desktop\ML2\Final_Project\src\db"
+
+    # Initialize the OpenAI embeddings model
     embeddings = OpenAIEmbeddings()
+
+    # Convert the given text chunks into Document objects
     documents = [Document(chunk) for chunk in chunks]
+
+    # Create a vector store from the documents using the embeddings model and save it to the specified directory
     vectore_store = Chroma.from_documents(
         documents, embeddings, persist_directory=persist_directory)
+
+    # Return the vector store object
     return vectore_store
 
+    """
+    FOR EXAMPLE
+    chunks = ["This is a test sentence.", "Here is another sentence.", "Machine learning is fascinating."]
+    vector_store = get_vector_store(chunks)
+    
+    This returns the created vector store object, which can be used later for various operations like searching or similarity calculations.
+    """
 
+
+# This is for using in Support.py
 def orchestration_pdf_vectore_store(pdf_path):
     text_pdf = process_pdf(pdf_path)
     text_chunks = get_chunks_from_pdf(text_pdf)
     vectore_store = get_vector_store(text_chunks)
+    # A vector store created from the PDF text chunks.
     return vectore_store
 
 
 def get_context_retriever_chain(vectore_store):
+    """
+        1. Creating the Context Retriever Chain (Retrieval Phase):
+        This function creates a chain that retrieves information using the vector store. 
+        This chain uses user input and previous conversation history to search for relevant information.
+    """
+
+    # This is for using in Support.py
+    # Creates a context-aware retriever chain using a language model and a vector store retriever.
+
     llm = ChatOpenAI()
     retriever = vectore_store.as_retriever()
     # this prompt will be filled with the variables we will pass in the chain
@@ -74,20 +101,27 @@ def get_context_retriever_chain(vectore_store):
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}"),
         ("user", "Erstelle basierend auf dem obigen Gespräch eine Suchanfrage, um Informationen zu erhalten, die für das Gespräch relevant sind.")
+        # Create a search request based on the above conversation to obtain information relevant to the conversation.
     ])
     retriever_chain = create_history_aware_retriever(llm, retriever, prompt)
+    # A context-aware retriever chain for querying the vector store.
     return retriever_chain
-
-# final retriever chain, this is taking our user query, our chat history and is going to return us an answer based on the entire conversation
-# and context the previous chain has found.
 
 
 def get_conversational_rag_chain(retriever_chain):
+    """
+        2. Creating the Conversational RAG Chain (Generation Phase):
+        This function creates the final RAG chain by combining the retriever chain and a generative model. 
+        The generative model uses the retrieved documents to answer user queries.
+    """
+    # final retriever chain, this is taking our user query, our chat history and is going to return us an answer based on the entire conversation
+    # and context the previous chain has found.
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages([
         ("system",
          "Antworten Sie auf die Fragen des Benutzers ausschliesslich basierend auf dem untenstehenden Kontext.:\n\n{context}"),
         MessagesPlaceholder(variable_name="chat_history"),
+        # "Respond to the user's questions solely based on the context below.:\n\n{!!!t}),
         ("user", "{input}")
     ])
     stuff_documents_chain = create_stuff_documents_chain(llm, prompt)
@@ -117,10 +151,16 @@ def init_mongodb_connection():
 
 
 def upload_to_mongodb(input, answer, embeddings, collection, time_zone='Europe/Zurich'):
+    """
+    Uplads the (user's) input, (chatbot response) answer, and embeddings (model) to MongoDB.
+    """
     # Get the current time in the specified time zone
     tz = pytz.timezone(time_zone)
     timestamp = datetime.now(tz)
     bot_embeddings_response = embeddings.embed_documents([answer])
+    #       The embed_documents method of the embeddings object is called with the answer text.
+    #  `answer` : converting -> into a numerical vector representation
+
     embeddingsBot = bot_embeddings_response[0]
     # Create the document to insert
     document = {
@@ -138,6 +178,12 @@ def upload_to_mongodb(input, answer, embeddings, collection, time_zone='Europe/Z
 
 
 def orchestrate_response_and_upload(chat_history, conversational_rag_chain, input, collection, embeddings):
+    """
+        3. Generating the Final Response and Uploading (Orchestration Phase):
+        This function orchestrates the entire process. 
+        It takes the user input and conversation history, generates a final response using retrieval and generation, 
+        and uploads the data to the database.
+    """
     # Step 1: Get the chatbot's response
     chatbot_answer = get_response(
         chat_history, conversational_rag_chain, input)
@@ -149,6 +195,29 @@ def orchestrate_response_and_upload(chat_history, conversational_rag_chain, inpu
 
     # Step 3: Return the chatbot's answer
     return chatbot_answer
+
+
+"""
+when I go to the `Validierung` tab and answer the quesion like that;
+
+question: Ein Kunde möchte wissen, ob alle Insassen seines Fahrzeugs versichert sind oder nur er selbst. Wie soll ich darauf antworten? Er ist beim VCS versichert.
+answer: Beim Verkehrs-Club der Schweiz (VCS) sind in der Regel sowohl der Fahrzeughalter als auch die Insassen des Fahrzeugs versichert. Es kommt jedoch darauf an, welche spezifischen Versicherungsleistungen der Kunde gewählt hat. Der VCS bietet verschiedene Versicherungen an, darunter Haftpflichtversicherung, Teilkasko und Vollkasko.
+^- Answer from the chatgpt site. That's why the similarity is high.
+=>
+Document 665b47eaabb145fcc25aae7e updated with validation and embeddings successfully
+Document 665b47eaabb145fcc25aae7e updated with cosine similarity 0.9520938488463478
+2024-06-13 03:08:51.472 Please replace `st.experimental_rerun` with `st.rerun`.
+
+`st.experimental_rerun` will be removed after 2024-04-01.
+
+---
+question: my feeling is bad
+answer: Ohhhhhhh. Who make you feeling so bad??? I can scold. :(
+=>
+Document 666a4256f9b6e41af2e41b3b updated with validation and embeddings successfully
+Document 666a4256f9b6e41af2e41b3b updated with cosine similarity 0.7740296291928712
+2024-06-13 03:14:22.856 Please replace `st.experimental_rerun` with `st.rerun`.
+"""
 
 
 def update_document(document_id, validation_answer, collection, embeddings):
@@ -180,6 +249,11 @@ def update_document(document_id, validation_answer, collection, embeddings):
 
 
 def trigger_cosine_similarity_calculation(document_id, collection):
+    """
+    embeddingsBot: an embedding vector for the answer generated by the chatbot.
+    embeddingsAnswer: an embedding vector for the correct answer provided by the user (initially set to None).
+
+    """
     document = collection.find_one({"_id": ObjectId(document_id)})
     if document and document.get("embeddingsBot") and document.get("embeddingsAnswer"):
         embeddingsBot = document["embeddingsBot"]
@@ -208,6 +282,9 @@ def calculate_cosine_similarity(vec1, vec2):
 
 
 def calculate_average_cosine_similarity(collection):
+    """
+    Calculates the average cosine similarity across all documents in the MongoDB collection.
+    """
     pipeline = [
         {"$match": {"cosineSimilarity": {"$ne": None}}},
         {"$group": {"_id": None, "averageCosineSimilarity": {"$avg": "$cosineSimilarity"}}}
@@ -220,6 +297,7 @@ def calculate_average_cosine_similarity(collection):
 
 
 def update_old_documents(collection):
+    # Update old documents in MongoDB with validation answers but no cosine similarity calculated.
     # Fetch documents where embeddingsAnswer is not None and cosineSimilarity is None
     documents = collection.find(
         {"embeddingsAnswer": {"$ne": None}, "cosineSimilarity": None})
@@ -252,5 +330,7 @@ def get_systems_health(collection):
 
     if average_cosine_similarity < 0.8:
         return "Momentan sind die Antworten unseres Systems nicht ganz mit den Antworten erfahrener Mitarbeiter abgestimmt. Wir kümmern uns um die Situation."
+        # At the moment, the answers of our system are not fully aligned with the answers of experienced employees. We'll take care of the situation.
     else:
         return "Derzeit entspricht die Qualität unserer Antworten den Antworten erfahrener Mitarbeiter."
+        # "Currently, the quality of our answers corresponds to the answers of experienced employees."
