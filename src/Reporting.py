@@ -27,17 +27,15 @@ EMAIL_RECEIVER = 'sonah5009@gmail.com'
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
+
 # Step 1: Get documents from MongoDB
-
-
 def get_documents_from_mongodb(collection):
     documents = collection.find({}, {"input": 1})
     inputs = [doc["input"] for doc in documents]
     return inputs
 
+
 # Step 2: Send data to OpenAI
-
-
 def get_openai_response(inputs):
     # german
     messages = [
@@ -48,7 +46,7 @@ def get_openai_response(inputs):
     # english
     messages = [
         {"role": "system", "content": "You are an assistant who helps to write concise, precise, and compact messages. Your name is Reporting Assistant and you sign the messages yourself."},
-        {"role": "user",  "content": "Based on these questions from different users: {inputs}, please write a concise, precise, and compact message reporting to the team leader about the knowledge gaps among the employees and providing specific training recommendations on certain topics related to the questions asked. The recommendations and topics should be related to the insurances mentioned in the questions. Please avoid including a subject line in your response."}
+        {"role": "user",  "content": f"Based on these questions from different users: {inputs}, please write a concise, precise, and compact message reporting to the team leader about the knowledge gaps among the employees and providing specific training recommendations on certain topics related to the questions asked. The recommendations and topics should be related to the insurances mentioned in the questions. Please avoid including a subject line in your response."}
     ]
 
     response = client.chat.completions.create(
@@ -76,9 +74,8 @@ def send_email(body):
         smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
         smtp.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, em.as_string())
 
+
 # Main function to execute the workflow
-
-
 def main():
     # MongoDB connection details
     collection = init_mongodb_connection()
