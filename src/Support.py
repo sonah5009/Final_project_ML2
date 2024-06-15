@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st  # this is library for web applications
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_openai import OpenAIEmbeddings
 from concurrent.futures import ThreadPoolExecutor
@@ -18,19 +18,18 @@ if "embeddings" not in st.session_state:
 
 # this is used to get cosine similarity.
 with st.sidebar:
-    if st.button("Systemstatus prüfen"):
+    if st.button("Check system status"):  # Systemstatus prüfen
         health_status = get_systems_health(st.session_state.collection)
         st.write(health_status)
     else:
-        st.write("Klicken Sie auf die Schaltfläche, um den Systemstatus zu prüfen.")
+        st.write("Click on the button to check the system status.")
 
 with st.sidebar:
-    st.write("Systemstatus wird nicht automatisch aktualisiert. Klicken Sie auf die Schaltfläche, um den aktuellen Systemstatus zu prüfen.")
+    st.write("System status is not updated automatically. Click on the button to check the current system status.")
 
-# initialize pdf and get vectore store. You will need to change the path from the file, so it matches yours.. This is not efficent, everytime i run the application the method is going to run, even if the store already exists. I know, i need to improve this.
-# at the end of the day this is a prototype.
-# pdf = r"C:\Users\Admin\Desktop\ML2\Final_Project\src\Leistungen.pdf"
-pdf = "/Users/sonah/Library/CloudStorage/OneDrive-ZHAW/ML2/Final_project_ML2/src/Leistungen.pdf"
+# initialize pdf and get vectore store.
+# everytime i run the application the method is going to run, even if the store already exists.
+pdf = "/Users/sonah/Library/CloudStorage/OneDrive-ZHAW/ML2/Final_project_ML2/src/Leistungen_en.pdf"
 if "vectore_store" not in st.session_state:
     st.session_state.vector_store = orchestration_pdf_vectore_store(pdf)
 # get the context needed to answer the question
@@ -44,13 +43,13 @@ conversational_rag_chain = get_conversational_rag_chain(retriever_chain)
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        AIMessage(content="Hey! Wie kann ich dir helfen?"),
+        AIMessage(content="Hey! How can I help you?"),
     ]
 
 # user input
-user_query = st.chat_input("Schreibe hier deine Fragen")
+user_query = st.chat_input("Write your questions here")
 if user_query is not None and user_query != "":
-    with st.spinner("Wir bereiten die beste Antwort vor ⏳"):
+    with st.spinner("We prepare the best answer ⏳"):
         response = orchestrate_response_and_upload(
             st.session_state.chat_history, conversational_rag_chain, user_query, st.session_state.collection, st.session_state.embeddings)
         st.session_state.chat_history.append(HumanMessage(content=user_query))

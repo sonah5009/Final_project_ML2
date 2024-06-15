@@ -20,8 +20,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Was wondering why my Document inside of my vectore store method was yellow. Chat-GPT saved the day.
-
 
 class Document:
     def __init__(self, content, metadata=None):
@@ -37,17 +35,15 @@ def process_pdf(pdf_path):
         text += page.extract_text() if page.extract_text is not None else ""
     return text
 
+
 # get chunks from pdf
-
-
 def get_chunks_from_pdf(text):
     text_splitter = RecursiveCharacterTextSplitter()
     chunks = text_splitter.split_text(text)
     return chunks
 
-# create vector store from chunks - you will need to change the path of the persist directory, so it matches yours.
 
-
+# create vector store from chunks
 def get_vector_store(chunks):
     # Set the directory where the vector store database will be saved
     persist_directory = "/Users/sonah/Library/CloudStorage/OneDrive-ZHAW/ML2/Final_project_ML2/src/db"
@@ -198,7 +194,7 @@ def orchestrate_response_and_upload(chat_history, conversational_rag_chain, inpu
 
 
 """
-when I go to the `Validierung` tab and answer the quesion like that;
+when I go to the `Validierung(Validation)` tab and answer the quesion like that;
 
 question: Ein Kunde möchte wissen, ob alle Insassen seines Fahrzeugs versichert sind oder nur er selbst. Wie soll ich darauf antworten? Er ist beim VCS versichert.
 answer: Beim Verkehrs-Club der Schweiz (VCS) sind in der Regel sowohl der Fahrzeughalter als auch die Insassen des Fahrzeugs versichert. Es kommt jedoch darauf an, welche spezifischen Versicherungsleistungen der Kunde gewählt hat. Der VCS bietet verschiedene Versicherungen an, darunter Haftpflichtversicherung, Teilkasko und Vollkasko.
@@ -329,8 +325,8 @@ def get_systems_health(collection):
     average_cosine_similarity = calculate_average_cosine_similarity(collection)
 
     if average_cosine_similarity < 0.8:
-        return "Momentan sind die Antworten unseres Systems nicht ganz mit den Antworten erfahrener Mitarbeiter abgestimmt. Wir kümmern uns um die Situation."
-        # At the moment, the answers of our system are not fully aligned with the answers of experienced employees. We'll take care of the situation.
+        # return "Momentan sind die Antworten unseres Systems nicht ganz mit den Antworten erfahrener Mitarbeiter abgestimmt. Wir kümmern uns um die Situation."
+        return "At the moment, the answers of our system are not fully aligned with the answers of experienced employees. We'll take care of the situation."
     else:
-        return "Derzeit entspricht die Qualität unserer Antworten den Antworten erfahrener Mitarbeiter."
-        # "Currently, the quality of our answers corresponds to the answers of experienced employees."
+        # return "Derzeit entspricht die Qualität unserer Antworten den Antworten erfahrener Mitarbeiter."
+        return "Currently, the quality of our answers corresponds to the answers of experienced employees."

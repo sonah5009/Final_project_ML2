@@ -11,8 +11,8 @@ collection = init_mongodb_connection()
 embeddings = OpenAIEmbeddings()
 
 # Set Streamlit page configuration
-st.set_page_config(page_title="Validierung", page_icon="✅")
-st.title("Validierung")  # Title of the page
+st.set_page_config(page_title="Validation", page_icon="✅")
+st.title("Validation")  # Title of the page
 
 # Sidebar with instructions for answering questions
 # Explanation on how the answers based on the questions should be answered.
@@ -37,17 +37,20 @@ if documents:
     # Display each document one by one
     for doc in documents:
         # Displaying the question (assuming "Frage" means "Question" in German)
-        st.write("Frage")
+        st.write("Question")
+        # st.write("Frage")
         # Display the question content from the document
         st.write(doc["input"])
 
         # Container for user input and update button
         with st.container():
             validation_answer = st.text_input(
-                f"Beantworte die Frage, wie beschrieben", key=str(doc['_id']))
+                f"Answer the question as described", key=str(doc['_id']))
+            # f"Beantworte die Frage, wie beschrieben", key=str(doc['_id']))
 
             # Button to add validation answer
-            if st.button(f"Füge Antwort hinzu", key=f"button_{str(doc['_id'])}"):
+            if st.button(f"Add reply", key=f"button_{str(doc['_id'])}"):
+                # if st.button(f"Füge Antwort hinzu", key=f"button_{str(doc['_id'])}"):
                 # Call method to update the document with validation answer and embeddings
                 update_document(
                     str(doc['_id']), validation_answer, collection, embeddings)

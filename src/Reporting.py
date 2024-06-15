@@ -21,7 +21,6 @@ client = OpenAI()
 EMAIL_SENDER = 'chatbotreporting@gmail.com'
 EMAIL_PASSWORD = os.getenv("EMAIL")
 EMAIL_RECEIVER = 'sonah5009@gmail.com'
-# EMAIL_RECEIVER = 'martindecastro16@gmail.com'
 
 # OpenAI API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -98,5 +97,6 @@ def main():
     print("Email sent successfully!")
 
 
-if __name__ == "__main__":
-    main()
+main()
+# if __name__ == "__main__":
+#     main()
